@@ -48,7 +48,6 @@ struct DirInfo
 		std::vector<std::string> result;
 		if (this->children.size() == 0)
 		{
-			std::cout << "oi" << this->path << std::endl;
 			result.push_back(this->path);
 			return result;
 		}
