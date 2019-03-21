@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -40,6 +41,31 @@ struct DirInfo
 
 		for (auto &child : this->children)
 			child.printDirInfo(step + 2);
+	}
+
+	std::vector<std::string> getFileList() const
+	{
+		std::vector<std::string> result;
+		if (this->children.size() == 0)
+		{
+			std::cout << "oi" << this->path << std::endl;
+			result.push_back(this->path);
+			return result;
+		}
+		std::vector<std::vector<std::string>> result2;
+
+		// transform each children in a vector of its sub-files (if any)
+		for (auto &c : this->children)
+		{
+			result2.push_back(c.getFileList());
+		}
+
+		for (auto &v : result2)
+		{
+			//merge array
+			result.insert(result.end(), v.begin(), v.end());
+		}
+		return result;
 	}
 };
 

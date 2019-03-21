@@ -12,5 +12,6 @@ int main()
 	std::string dirInput(".");
 	DirUtils::DirInfo dirInfo(dirInput, dirInput, DirUtils::getFilesRecursively(dirInput, 0));
 
+	std::vector<std::string> res = dirInfo.getFileList();
 	std::cout << dirInfo << std::endl;
 }
