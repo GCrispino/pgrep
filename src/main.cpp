@@ -1,4 +1,6 @@
+#include <fstream>
 #include <iostream>
+#include <regex>
 #include <string>
 #include <vector>
 #include <dirent.h>
@@ -40,6 +42,31 @@ int getSearchPath(char **argv)
 	return n_threads;
 }
 
+//Returns line numbers of matches of the regex on the file designated by filePath
+std::vector<unsigned> searchRegexFile(std::regex expr, std::string filePath)
+{
+	std::ifstream file(filePath);
+	std::vector<unsigned> matches;
+
+	if (file)
+	{
+		std::string line;
+		unsigned lineI = 0;
+		while (getline(file, line))
+		{
+			std::smatch m;
+			if (std::regex_search(line, m, expr))
+			{
+				matches.push_back(lineI);
+			}
+			++lineI;
+		}
+	}
+
+	file.close();
+	return matches;
+}
+
 int main(int argc, char **argv)
 {
 	if (argc < 4)
@@ -50,13 +77,22 @@ int main(int argc, char **argv)
 	}
 
 	int maxThreads = getMaxThreads(argv);
-	std::string regex(argv[2]), searchPath(argv[3]);
-	std::string dirInput(".");
+	std::string regexStr(argv[2]), searchPath(argv[3]);
+
+	std::vector<pthread_t> threads(maxThreads);
+	std::regex regex(regexStr);
+	std::string dirInput(searchPath);
 	DirUtils::DirInfo dirInfo(dirInput, dirInput, DirUtils::getFilesRecursively(dirInput, 0));
 
 	std::cout << "Max thread number: " << maxThreads << std::endl;
-	std::cout << "Regex: " << regex << std::endl;
+	std::cout << "Regex: " << regexStr << std::endl;
 	std::cout << "Search path: " << searchPath << std::endl;
 	std::vector<std::string> res = dirInfo.getFileList();
-	std::cout << dirInfo << std::endl;
+
+	std::vector<unsigned> lineMatches = searchRegexFile(regex, res[0]);
+
+	for (unsigned matchLine : lineMatches)
+	{
+		std::cout << res[0] << ':' << matchLine << std::endl;
+	}
 }
