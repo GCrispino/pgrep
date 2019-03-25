@@ -1,5 +1,6 @@
 #include <iostream>
 #include <algorithm>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -16,6 +17,7 @@ struct DirInfo
 
 	std::string name;
 	std::string path;
+	int size;
 	std::vector<DirInfo> children;
 
 	friend std::ostream &operator<<(std::ostream &os, DirInfo &d)
@@ -28,30 +30,47 @@ struct DirInfo
 	DirInfo(
 		const std::string &name = "",
 		const std::string &path = "",
-		const std::vector<DirInfo> &children = {}) : name(name), path(path), children(children) {}
+		const int size = -1,
+		const std::vector<DirInfo> &children = {}) : name(name), path(path), size(size), children(children) {}
+
+	DirInfo(
+		const DirInfo &d) : name(d.name), path(d.path), size(d.size), children(d.children) {}
 
 	~DirInfo()
 	{
 	}
 
+	DirInfo &operator=(const DirInfo &d)
+	{
+		if (this == &d)
+			return *this;
+
+		this->name = d.name;
+		this->path = d.path;
+		this->size = d.size;
+		this->children = d.children;
+
+		return *this;
+	}
+
 	void printDirInfo(int step)
 	{
 		printStep(step);
-		std::cout << this->name << std::endl;
+		std::cout << this->name << ' ' << this->size << std::endl;
 
 		for (auto &child : this->children)
 			child.printDirInfo(step + 2);
 	}
 
-	std::vector<std::string> getFileList() const
+	std::vector<DirInfo> getFileList() const
 	{
-		std::vector<std::string> result;
+		std::vector<DirInfo> result;
 		if (this->children.size() == 0)
 		{
-			result.push_back(this->path);
+			result.push_back(*this);
 			return result;
 		}
-		std::vector<std::vector<std::string>> result2;
+		std::vector<std::vector<DirInfo>> result2;
 
 		// transform each children in a vector of its sub-files (if any)
 		for (auto &c : this->children)
@@ -68,7 +87,7 @@ struct DirInfo
 	}
 };
 
-std::vector<DirInfo> getFilesRecursively(std::string dirname, int step)
+std::vector<DirInfo> getFilesRecursively(std::string dirname)
 {
 	DIR *dirp = opendir(dirname.c_str());
 	struct dirent *dp;
@@ -92,9 +111,13 @@ std::vector<DirInfo> getFilesRecursively(std::string dirname, int step)
 		{
 			continue;
 		}
-
 		std::string joined_path(dirname + '/' + dpName);
-		children.push_back(DirInfo(dpName, joined_path, getFilesRecursively(joined_path, step + 2)));
+
+		std::ifstream file(joined_path.c_str(), std::ifstream::ate);
+		int size = file.tellg();
+		file.close();
+
+		children.push_back(DirInfo(dpName, joined_path, size, getFilesRecursively(joined_path)));
 	}
 
 	closedir(dirp);

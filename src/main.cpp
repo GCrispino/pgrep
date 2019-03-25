@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -10,7 +11,7 @@
 
 struct thread_param
 {
-	std::vector<std::string> *arrRef;
+	std::vector<DirUtils::DirInfo> *arrRef;
 	std::regex regex;
 	int start, end, n;
 };
@@ -32,7 +33,7 @@ int getRegex(char **argv)
 	int n_threads = atoi(argv[1]);
 	if (!n_threads)
 	{
-		std::cout << "Erro ao ler numero maximo de threads!" << std::endl;
+		std::cout << "Error while reading regex!" << std::endl;
 		exit(1);
 	}
 
@@ -44,7 +45,7 @@ int getSearchPath(char **argv)
 	int n_threads = atoi(argv[1]);
 	if (!n_threads)
 	{
-		std::cout << "Erro ao ler numero maximo de threads!" << std::endl;
+		std::cout << "Error while reading max thread number!" << std::endl;
 		exit(1);
 	}
 
@@ -57,14 +58,12 @@ std::vector<unsigned> searchRegexFile(std::regex expr, std::string filePath)
 	std::ifstream file(filePath);
 	std::vector<unsigned> matches;
 
-	// std::cout << "File path: " << filePath << std::endl;
 	if (file)
 	{
 		std::string line;
 		unsigned lineI = 0;
 		while (getline(file, line))
 		{
-			// std::cout << "line: " << line << std::endl;
 			std::smatch m;
 			if (std::regex_search(line, m, expr))
 			{
@@ -84,30 +83,41 @@ void *searchRegexFiles(void *args)
 {
 	struct thread_param *params = (struct thread_param *)args;
 
-	// std::cout << "Iniciando searchRegexFiles: " << params->start << ',' << params->end << std::endl;
-	std::vector<std::string> *vec = params->arrRef;
-	// std::cout << "  Arquivos: " << std::endl;
-	// for (int i = params->start; i <= params->end && i < params->n; ++i)
-	// {
+	std::vector<DirUtils::DirInfo> *vec = params->arrRef;
 
-	// 	std::cout << "    " << (*vec)[i] << std::endl;
-	// }
 	for (int i = params->start; i <= params->end && i < params->n; ++i)
 	{
 
-		std::vector<unsigned> matches = searchRegexFile(params->regex, (*vec)[i]);
+		std::vector<unsigned> matches = searchRegexFile(params->regex, (*vec)[i].path);
 
 		pthread_mutex_lock(&lock);
 		for (unsigned match : matches)
 		{
-			std::cout << (*vec)[i] << ": " << match << std::endl;
+			std::cout << (*vec)[i].path << ": " << match << std::endl;
 		}
 		pthread_mutex_unlock(&lock);
 	}
-	// std::cout << "Finalizar searchRegexFiles: " << params->start << ',' << params->end << std::endl;
 
 	return NULL;
-	//------------------------------------------------------------------------------
+}
+
+bool compareFiles(const DirUtils::DirInfo &file1, const DirUtils::DirInfo &file2)
+{
+	return file1.size > file2.size;
+}
+
+std::vector<DirUtils::DirInfo> sortFilesToThreads(unsigned nThreads, const std::vector<DirUtils::DirInfo> &files)
+{
+	std::vector<DirUtils::DirInfo> sortedVec(files);
+
+	std::sort(sortedVec.begin(), sortedVec.end(), compareFiles);
+
+	for (unsigned i = 1, j = sortedVec.size() - 1; i < sortedVec.size() / 2; i += 2, j -= 2)
+	{
+		std::swap(sortedVec[i], sortedVec[j]);
+	}
+
+	return sortedVec;
 }
 
 int main(int argc, char **argv)
@@ -126,20 +136,22 @@ int main(int argc, char **argv)
 	std::vector<pthread_t> threads(maxThreads);
 	std::regex regex(regexStr);
 	std::string dirInput(searchPath);
-	DirUtils::DirInfo dirInfo(dirInput, dirInput, DirUtils::getFilesRecursively(dirInput, 0));
+	DirUtils::DirInfo dirInfo(dirInput, dirInput, -1, DirUtils::getFilesRecursively(dirInput));
 
 	std::cout << "Max thread number: " << maxThreads << std::endl;
 	std::cout << "Regex: " << regexStr << std::endl;
 	std::cout << "Search path: " << searchPath << std::endl;
-	std::vector<std::string> res = dirInfo.getFileList();
+	std::vector<DirUtils::DirInfo> res = dirInfo.getFileList();
+	std::vector<DirUtils::DirInfo> sortedFiles = sortFilesToThreads(maxThreads, res);
 
 	for (int i = 0; i < maxThreads; ++i)
 	{
 		unsigned n = res.size();
-		int d = ceil((float)n / maxThreads);
+		int maxFilesPerThread = ceil((float)n / maxThreads);
+
 		params[i].arrRef = &res;
-		params[i].start = d * i;
-		params[i].end = d * i + d - 1;
+		params[i].start = maxFilesPerThread * i;
+		params[i].end = maxFilesPerThread * i + maxFilesPerThread - 1;
 		params[i].regex = regex;
 		params[i].n = n;
 
