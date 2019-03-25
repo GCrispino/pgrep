@@ -57,7 +57,7 @@ std::vector<unsigned> searchRegexFile(std::regex expr, std::string filePath)
 	std::ifstream file(filePath);
 	std::vector<unsigned> matches;
 
-	std::cout << "File path: " << filePath << std::endl;
+	// std::cout << "File path: " << filePath << std::endl;
 	if (file)
 	{
 		std::string line;
@@ -78,24 +78,33 @@ std::vector<unsigned> searchRegexFile(std::regex expr, std::string filePath)
 	return matches;
 }
 
+pthread_mutex_t lock;
+
 void *searchRegexFiles(void *args)
 {
 	struct thread_param *params = (struct thread_param *)args;
 
-	std::cout << "Iniciando searchRegexFiles: " << params->start << ',' << params->end << std::endl;
+	// std::cout << "Iniciando searchRegexFiles: " << params->start << ',' << params->end << std::endl;
 	std::vector<std::string> *vec = params->arrRef;
-	std::cout << "  Arquivos: " << std::endl;
+	// std::cout << "  Arquivos: " << std::endl;
+	// for (int i = params->start; i <= params->end && i < params->n; ++i)
+	// {
+
+	// 	std::cout << "    " << (*vec)[i] << std::endl;
+	// }
 	for (int i = params->start; i <= params->end && i < params->n; ++i)
 	{
 
-		std::cout << "    " << (*vec)[i] << std::endl;
-	}
-	for (int i = params->start; i <= params->end && i < params->n; ++i)
-	{
+		std::vector<unsigned> matches = searchRegexFile(params->regex, (*vec)[i]);
 
-		searchRegexFile(params->regex, (*vec)[i]);
+		pthread_mutex_lock(&lock);
+		for (unsigned match : matches)
+		{
+			std::cout << (*vec)[i] << ": " << match << std::endl;
+		}
+		pthread_mutex_unlock(&lock);
 	}
-	std::cout << "Finalizar searchRegexFiles: " << params->start << ',' << params->end << std::endl;
+	// std::cout << "Finalizar searchRegexFiles: " << params->start << ',' << params->end << std::endl;
 
 	return NULL;
 	//------------------------------------------------------------------------------
