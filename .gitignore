@@ -21,16 +21,16 @@
 *.smod
 
 # Compiled Static libraries
+obj
 *.lai
 *.la
 *.a
 *.lib
 
 # Executables
-out/*
 *.exe
 *.out
 *.app
 
 *teste*
-*.ipch
+ipch
