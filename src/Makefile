@@ -1,6 +1,7 @@
 CC=g++
-CFLAGS=-I$(IDIR) --std=c++11 -lpthread -lm
+CFLAGS=-I$(IDIR) --std=c++11
 IDIR=lib
+LIBS=-lpthread -lm
 _DEPS = DirInfo.hpp
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
