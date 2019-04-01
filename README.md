@@ -17,7 +17,7 @@ $ make
 
 This will generate an executable file called `pgrep` under the `src` folder
 
-# Running
+## Running
 
 To run, follow this pattern:
 
