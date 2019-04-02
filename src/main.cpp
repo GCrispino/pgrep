@@ -21,7 +21,7 @@ int getMaxThreads(char **argv)
 	int n_threads = atoi(argv[1]);
 	if (!n_threads)
 	{
-		std::cout << "Erro ao ler numero maximo de threads!" << std::endl;
+		std::cout << "Error while reading thread max number!" << std::endl;
 		exit(1);
 	}
 
@@ -138,9 +138,9 @@ int main(int argc, char **argv)
 	std::string dirInput(searchPath);
 	DirUtils::DirInfo dirInfo(dirInput, dirInput, -1, DirUtils::getFilesRecursively(dirInput));
 
-	std::cout << "Max thread number: " << maxThreads << std::endl;
-	std::cout << "Regex: " << regexStr << std::endl;
-	std::cout << "Search path: " << searchPath << std::endl;
+	// std::cout << "Max thread number: " << maxThreads << std::endl;
+	// std::cout << "Regex: " << regexStr << std::endl;
+	// std::cout << "Search path: " << searchPath << std::endl;
 	std::vector<DirUtils::DirInfo> res = dirInfo.getFileList();
 	std::vector<DirUtils::DirInfo> sortedFiles = sortFilesToThreads(maxThreads, res);
 
