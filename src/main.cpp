@@ -97,6 +97,7 @@ void *searchRegexFiles(void *args)
 		}
 		pthread_mutex_unlock(&lock);
 	}
+	std::cout<< std::endl;
 
 	return NULL;
 }
@@ -149,7 +150,7 @@ int main(int argc, char **argv)
 		unsigned n = res.size();
 		int maxFilesPerThread = ceil((float)n / maxThreads);
 
-		params[i].arrRef = &res;
+		params[i].arrRef = &sortedFiles;
 		params[i].start = maxFilesPerThread * i;
 		params[i].end = maxFilesPerThread * i + maxFilesPerThread - 1;
 		params[i].regex = regex;
