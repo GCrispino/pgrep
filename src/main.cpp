@@ -97,7 +97,6 @@ void *searchRegexFiles(void *args)
 		}
 		pthread_mutex_unlock(&lock);
 	}
-	std::cout<< std::endl;
 
 	return NULL;
 }
@@ -107,7 +106,7 @@ bool compareFiles(const DirUtils::DirInfo &file1, const DirUtils::DirInfo &file2
 	return file1.size > file2.size;
 }
 
-std::vector<DirUtils::DirInfo> sortFilesToThreads(unsigned nThreads, const std::vector<DirUtils::DirInfo> &files)
+std::vector<DirUtils::DirInfo> sortFilesToThreads(const std::vector<DirUtils::DirInfo> &files)
 {
 	std::vector<DirUtils::DirInfo> sortedVec(files);
 
@@ -143,7 +142,7 @@ int main(int argc, char **argv)
 	// std::cout << "Regex: " << regexStr << std::endl;
 	// std::cout << "Search path: " << searchPath << std::endl;
 	std::vector<DirUtils::DirInfo> res = dirInfo.getFileList();
-	std::vector<DirUtils::DirInfo> sortedFiles = sortFilesToThreads(maxThreads, res);
+	std::vector<DirUtils::DirInfo> sortedFiles = sortFilesToThreads(res);
 
 	for (int i = 0; i < maxThreads; ++i)
 	{
