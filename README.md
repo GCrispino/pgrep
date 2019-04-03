@@ -32,5 +32,5 @@ A/a.txt: 0
 A/a.txt: 2
 A/a.txt: 5
 A/C/c.txt: 0
-A//C/c.txt: 1
+A/C/c.txt: 1
 ```
